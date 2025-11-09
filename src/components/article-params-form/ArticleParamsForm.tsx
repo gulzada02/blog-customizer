@@ -4,9 +4,11 @@ import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { Select } from 'src/ui/select';
 import { Text } from 'src/ui/text';
-import { FormEvent, useRef, useState, useEffect } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import styles from './ArticleParamsForm.module.scss';
-
+import { useOutsideClickClose } from '../../ui/select/hooks/useOutsideClickClose';
+import { useEnterSubmit } from '../../ui/select/hooks/useEnterSubmit';
+import clsx from 'clsx';
 import {
 	OptionType,
 	fontFamilyOptions,
@@ -28,21 +30,16 @@ export const ArticleParamsForm = ({ state, setState }: TFormProps) => {
 	const [formState, setFormState] = useState(state);
 	const formRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (formRef.current && !formRef.current.contains(event.target as Node)) {
-				setIsFormOpen(false);
-			}
-		};
+	useOutsideClickClose({
+		isOpen: isFormOpen,
+		rootRef: formRef,
+		onChange: setIsFormOpen,
+	});
 
-		if (isFormOpen) {
-			document.addEventListener('mousedown', handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [isFormOpen]);
+	useEnterSubmit({
+		placeholderRef: formRef,
+		onChange: setIsFormOpen,
+	});
 
 	const handleSetOption = (
 		fieldName: keyof ArticleStateType,
@@ -63,69 +60,72 @@ export const ArticleParamsForm = ({ state, setState }: TFormProps) => {
 
 	return (
 		<>
-			<ArrowButton
-				isOpen={isFormOpen}
-				onClick={() => setIsFormOpen((prev) => !prev)}
-			/>
-			<aside
-				className={`${styles.container} ${
-					isFormOpen ? styles.container_open : ''
-				}`}
-				ref={formRef}>
-				<form className={styles.form} onSubmit={handleSubmit}>
-					<Text size={31} weight={800} uppercase>
-						Задайте параметры
-					</Text>
+			<div ref={formRef}>
+				<ArrowButton
+					isOpen={isFormOpen}
+					onClick={() => setIsFormOpen(!isFormOpen)}
+				/>
+				<aside
+					className={clsx(styles.container, {
+						[styles.container_open]: isFormOpen,
+					})}>
+					{/* содержимое формы */}
+					<form className={styles.form} onSubmit={handleSubmit}>
+						<Text size={31} weight={800} uppercase>
+							Задайте параметры
+						</Text>
 
-					<Select
-						selected={formState.fontFamilyOption}
-						options={fontFamilyOptions}
-						onChange={(option) => handleSetOption('fontFamilyOption', option)}
-						title='Шрифт'
-					/>
-
-					<RadioGroup
-						selected={formState.fontSizeOption}
-						options={fontSizeOptions}
-						onChange={(option) => handleSetOption('fontSizeOption', option)}
-						name='radioGroup'
-						title='Размер шрифта'
-					/>
-
-					<Select
-						selected={formState.fontColor}
-						options={fontColors}
-						onChange={(option) => handleSetOption('fontColor', option)}
-						title='Цвет шрифта'
-					/>
-
-					<Separator />
-
-					<Select
-						selected={formState.backgroundColor}
-						options={backgroundColors}
-						onChange={(option) => handleSetOption('backgroundColor', option)}
-						title='Цвет фона'
-					/>
-
-					<Select
-						selected={formState.contentWidth}
-						options={contentWidthArr}
-						onChange={(option) => handleSetOption('contentWidth', option)}
-						title='Ширина контента'
-					/>
-
-					<div className={styles.bottomContainer}>
-						<Button
-							title='Сбросить'
-							onClick={handleResetForm}
-							htmlType='reset'
-							type='clear'
+						<Select
+							selected={formState.fontFamilyOption}
+							options={fontFamilyOptions}
+							onChange={(option) => handleSetOption('fontFamilyOption', option)}
+							title='Шрифт'
 						/>
-						<Button title='Применить' htmlType='submit' type='apply' />
-					</div>
-				</form>
-			</aside>
+
+						<RadioGroup
+							selected={formState.fontSizeOption}
+							options={fontSizeOptions}
+							onChange={(option) => handleSetOption('fontSizeOption', option)}
+							name='radioGroup'
+							title='Размер шрифта'
+							key={`fontsize-${formState.fontSizeOption.value}`}
+						/>
+
+						<Select
+							selected={formState.fontColor}
+							options={fontColors}
+							onChange={(option) => handleSetOption('fontColor', option)}
+							title='Цвет шрифта'
+						/>
+
+						<Separator />
+
+						<Select
+							selected={formState.backgroundColor}
+							options={backgroundColors}
+							onChange={(option) => handleSetOption('backgroundColor', option)}
+							title='Цвет фона'
+						/>
+
+						<Select
+							selected={formState.contentWidth}
+							options={contentWidthArr}
+							onChange={(option) => handleSetOption('contentWidth', option)}
+							title='Ширина контента'
+						/>
+
+						<div className={styles.bottomContainer}>
+							<Button
+								title='Сбросить'
+								onClick={handleResetForm}
+								htmlType='reset'
+								type='clear'
+							/>
+							<Button title='Применить' htmlType='submit' type='apply' />
+						</div>
+					</form>
+				</aside>
+			</div>
 		</>
 	);
 };
